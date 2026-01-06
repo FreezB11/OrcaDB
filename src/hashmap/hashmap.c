@@ -10,53 +10,9 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
-#define HM_CAP 4096 // hashmap-capacity
-
-typedef struct hm_node
-{
-    // 12bytes but it will be padded to 16 i belive
-    const char* key;
-    // same goes here so it will be 32bytes till here
-    void* value;
-    // pointer so 8 bytes [40bytes till now]
-    struct hm_node* next;
-    // struct hm_node* prev;
-    // this is also 8 bytes [48 bytes so far] this is okay ig
-    uint64_t hash; // we can save the hash to save recomputation
-
-    // length stored explicitly
-    size_t key_len;
-    size_t val_len;
-}hm_node; // 48 bytes;
-
-// we will stack align this; i.e. we try to keep the size as
-// small as possible by arranging the components correctly
-typedef struct map{
-    // 8bytes
-    hm_node** buckets; // array of bucket heads;
-    // size_t is 8 bytes [16bytes] so far
-    size_t capacity;
-    // this too is 8 bytes [24 bytes]
-    size_t count;
-    // 4 bytes that will [28 bytes]
-    float load_factor; // trig to resize when threshold hit;
-    // this will be padded and become 32 bytes;
-}hashmap;
-/*
-    we will do a analysis
-    hashmap == 32 bytes
-    hm_node** bucket since we will have 4096 entries
-    4096*8 = 32,768 bytes = 32 KB
-    memory for nodes 
-    4096*48 = 196,608 bytes = 192 KB
-
-    total = 229,408bytes = 224KB = 0.22MB
-    this is a rough figure while the real value is more than this
-*/
-
 // we will need a hash function
 #include "../hash/hash.h"
-
+#include "hashmap.h"
 /// @struct hashmap
 /// @brief creates hashmap
 hashmap* hm_create(size_t capacity){
