@@ -1,3 +1,6 @@
+CC = gcc
+FLAGS = -O3
+FLAGS += -lpthread
 
 docker:
 	docker build -t kvcache .
