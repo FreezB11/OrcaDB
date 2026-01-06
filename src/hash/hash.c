@@ -1,7 +1,6 @@
 ///@file: hash.c
 #include <stdint.h>
 #include <stddef.h>
-#include "../kv_string.h"
 
 uint64_t FNV_1a(const void *data, size_t len) {
     const unsigned char *p = data;
@@ -15,10 +14,11 @@ uint64_t FNV_1a(const void *data, size_t len) {
 }
 
 
-uint64_t djb2(kv_string* key){
+uint64_t djb2(const void *data, size_t len){
+    const unsigned char *bytes = data;
     uint64_t hash = 5381;
-    for(size_t i = 0; i < key->len; i++){
-        hash = ((hash << 5) + hash) + (unsigned char)key->str[i]; // hash* 33 +c
+    for(size_t i = 0; i < len; i++){
+        hash = ((hash << 5) + hash) + bytes[i]; // hash* 33 +c
     }
     return hash;
 }
@@ -120,8 +120,4 @@ uint64_t xxhash64(const char* key, size_t len) {
     h64 ^= h64 >> 32;
     
     return h64;
-}
-//wrapper for the kv_string
-uint64_t x2hash(kv_string* key){
-    return xxhash64(key->str, key->len);
 }

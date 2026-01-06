@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "../kv_string.h"
 
 /**
  * @file hash.h
@@ -31,7 +30,7 @@ uint64_t FNV_1a(const char* key, size_t len);
  * @param key Pointer to a kv_string containing the input data
  * @return 64-bit hash value
  */
-uint64_t djb2(kv_string* key);
+uint64_t djb2(const char* key);
 
 /**
  * @brief Compute the 64-bit xxHash of a raw byte buffer.
@@ -44,13 +43,3 @@ uint64_t djb2(kv_string* key);
  * @return 64-bit hash value
  */
 uint64_t xxhash64(const char* key, size_t len);
-
-/**
- * @brief Compute the 64-bit xxHash of a kv_string.
- *
- * This is a convenience wrapper around @ref xxhash64 for kv_string inputs.
- *
- * @param key Pointer to a kv_string containing the input data
- * @return 64-bit hash value
- */
-uint64_t x2hash(kv_string* key);
