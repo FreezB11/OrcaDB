@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "./hashmap/hashmap.h"
+#include "../src/hashmap/hashmap.h"
 
 int main() {
     hashmap* hm = hm_create(1024);

@@ -25,7 +25,7 @@ void handle_echo(http_req_t *req, http_resp_t *res) {
         pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
                         "\"%.*s\":\"%.*s\"",
                         req->params[i].key_len, req->params[i].key,
-                        req->params[i].val_len, req->params[i].val);
+                        req->params[i].val_len, (char *)req->params[i].val);
     }
     pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos, "}");
     res->status = 200;

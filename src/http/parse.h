@@ -1,7 +1,7 @@
 #pragma once
-#include <http/utils.h>
-#include <http/request.h>
-#include <http/conn.h>
+#include "utils.h"
+#include "request.h"
+#include "conn.h"
 
 SII parse_req_line(const char *buf, int buflen, http_req_t *req);
 SII parse_headers(const char *buf, int buflen, http_req_t *req);

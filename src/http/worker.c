@@ -1,5 +1,5 @@
-#include <http/worker.h>
-#include <http/http.h>
+#include "worker.h"
+#include "http.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -45,7 +45,7 @@ void *worker_thread(void *arg) {
     ev.data.fd = listen_fd;
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &ev);
 
-    printf("⚡ Worker %d ready on CPU %d\n", cpu, cpu % sysconf(_SC_NPROCESSORS_ONLN));
+    printf("⚡ Worker %d ready on CPU %ld\n", cpu, cpu % sysconf(_SC_NPROCESSORS_ONLN));
 
     while (1) {
         int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);

@@ -1,6 +1,9 @@
 ///@file: aof.c
 #include "aof.h"
-
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 // here we will be implementing Append-on-File(AoF)
 // the use is when we do a db_save we flush the AoF and then we 
 // keep updating the new calls made by the client

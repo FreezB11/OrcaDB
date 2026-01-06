@@ -12,7 +12,7 @@ typedef struct {
     struct {
         const char *key;
         int key_len;
-        const char *val;
+        void *val;
         int val_len;
     } params[8];
     int param_count;

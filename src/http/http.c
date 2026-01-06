@@ -1,6 +1,6 @@
-#include <http/http.h>
-#include <http/utils.h>
-#include <http/worker.h>
+#include "http.h"
+#include "utils.h"
+#include "worker.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -28,14 +28,9 @@ http* CreateServer(){
     
     printf("\n");
     printf("╔════════════════════════════════════════════╗\n");
-    printf("║  🚀 HYPER-OPTIMIZED C HTTP SERVER         ║\n");
-    printf("╠════════════════════════════════════════════╣\n");
     printf("║  📡 Port: 8080                            ║\n");
     printf("║  🔥 Threads: %-2d                           ║\n", threads);
     printf("╚════════════════════════════════════════════╝\n");
-    printf("\n📊 Benchmark:\n");
-    printf("   wrk -t12 -c400 -d30s http://localhost:8080/ping\n");
-    printf("   wrk -t12 -c400 -d30s http://localhost:8080/echo?key=value\n\n");
     fflush(stdout);
 
     conn_pool = mmap(NULL, sizeof(conn_ctx_t) * CONN_POOL_SIZE,

@@ -1,7 +1,7 @@
 #pragma once
-#include <http/utils.h>
-#include <http/request.h>
-#include <http/response.h>
+#include "utils.h"
+#include "request.h"
+#include "response.h"
 
 typedef void (*route_handler_t)(http_req_t*, http_resp_t*);
 

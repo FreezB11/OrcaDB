@@ -1,5 +1,6 @@
 #include "../src/hashmap/hashmap.h"
 #include "../src/storage/aof.h"
+#include "../src/storage/storage.h"
 
 int main() {
     hashmap* db = NULL;
@@ -7,7 +8,7 @@ int main() {
     // Step 1: Check if RDB snapshot exists
     if (file_exists("dump.rdb")) {
         printf("Loading from snapshot...\n");
-        db = rdb_load("dump.rdb");
+        db = db_load("dump.rdb");
     } else {
         db = hm_create(4096);
     }

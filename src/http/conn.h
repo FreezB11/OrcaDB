@@ -1,7 +1,7 @@
 #pragma once
-#include <http/request.h>
-#include <http/response.h>
-#include <http/utils.h>
+#include "request.h"
+#include "response.h"
+#include "utils.h"
 
 
 typedef enum {

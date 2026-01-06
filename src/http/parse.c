@@ -1,10 +1,13 @@
-#include <http/http.h>
+#include "http.h"
 #include <stdio.h>
 #include <string.h>
 
 /*
 parsing this 
 GET /<path>?key=value
+
+quick update we know will parse it for 
+method /<path>?key="value"&
 */
 SII parse_req_line(const char *buf, int buflen, http_req_t *req){
     const char* p = buf, *end = buf + buflen;
@@ -36,7 +39,7 @@ SII parse_req_line(const char *buf, int buflen, http_req_t *req){
                 p++;
                 req->params[idx].val = p;
                 while(p < end && *p != '&' && *p != ' ')p++;
-                req->params[idx].val_len = p - req->params[idx].val;
+                req->params[idx].val_len = p - (char *)req->params[idx].val;
             }else{
                 req->params[idx].val = "";
                 req->params[idx].val_len = 0;
@@ -79,7 +82,7 @@ SII parse_headers(const char *buf, int buflen, http_req_t *req){
     return -1;
 }
 
-SII parse_http_req(conn_ctx_t *ctx, http_req_t *req){
+SII  parse_http_req(conn_ctx_t *ctx, http_req_t *req){
     // we find end of req line
     char *EOL = memchr(ctx->read_buf, '\n', ctx->read_total);
     if(!EOL) return -1;

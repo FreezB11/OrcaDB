@@ -1,10 +1,10 @@
 #pragma once
 
 // internal
-#include <http/request.h>
-#include <http/response.h>
-#include <http/conn.h>
-#include <http/utils.h>
+#include "request.h"
+#include "response.h"
+#include "conn.h"
+#include "utils.h"
 // =========================
 // #define _GNU_SOURCE
 #include <stdio.h>
