@@ -1,0 +1,143 @@
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1200" height="900" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" font-size="28" font-weight="bold" text-anchor="middle" fill="#1a1a1a">
+    Distributed Cache Architecture
+  </text>
+  
+  <!-- Client Layer -->
+  <g id="clients">
+    <rect x="100" y="80" width="180" height="80" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="8"/>
+    <text x="190" y="115" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Client App 1</text>
+    <text x="190" y="140" font-size="12" text-anchor="middle" fill="white">Web Service</text>
+    
+    <rect x="510" y="80" width="180" height="80" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="8"/>
+    <text x="600" y="115" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Client App 2</text>
+    <text x="600" y="140" font-size="12" text-anchor="middle" fill="white">Mobile API</text>
+    
+    <rect x="920" y="80" width="180" height="80" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2" rx="8"/>
+    <text x="1010" y="115" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Client App 3</text>
+    <text x="1010" y="140" font-size="12" text-anchor="middle" fill="white">Background Jobs</text>
+  </g>
+  
+  <!-- Smart Client / Proxy Layer -->
+  <g id="proxy">
+    <rect x="300" y="220" width="600" height="100" fill="#50c878" stroke="#2d7a4a" stroke-width="2" rx="8"/>
+    <text x="600" y="255" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Smart Client / Proxy Layer</text>
+    <text x="600" y="280" font-size="13" text-anchor="middle" fill="white">• Consistent Hashing  • Connection Pooling  • Load Balancing</text>
+    <text x="600" y="300" font-size="13" text-anchor="middle" fill="white">• Failover Logic  • Request Routing  • Circuit Breaker</text>
+  </g>
+  
+  <!-- Arrows from clients to proxy -->
+  <line x1="190" y1="160" x2="400" y2="220" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="600" y1="160" x2="600" y2="220" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="1010" y1="160" x2="800" y2="220" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Cache Node Cluster -->
+  <g id="cache-nodes">
+    <!-- Node 1 -->
+    <rect x="150" y="400" width="200" height="140" fill="#ff6b6b" stroke="#cc5555" stroke-width="2" rx="8"/>
+    <text x="250" y="430" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Cache Node 1</text>
+    <text x="250" y="455" font-size="12" text-anchor="middle" fill="white">Primary: Keys A-F</text>
+    <text x="250" y="475" font-size="11" text-anchor="middle" fill="white">Memory: 8GB</text>
+    <text x="250" y="495" font-size="11" text-anchor="middle" fill="white">LRU Eviction</text>
+    <text x="250" y="515" font-size="11" text-anchor="middle" fill="white">Port: 6379</text>
+    
+    <!-- Node 2 -->
+    <rect x="500" y="400" width="200" height="140" fill="#ff6b6b" stroke="#cc5555" stroke-width="2" rx="8"/>
+    <text x="600" y="430" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Cache Node 2</text>
+    <text x="600" y="455" font-size="12" text-anchor="middle" fill="white">Primary: Keys G-M</text>
+    <text x="600" y="475" font-size="11" text-anchor="middle" fill="white">Memory: 8GB</text>
+    <text x="600" y="495" font-size="11" text-anchor="middle" fill="white">LRU Eviction</text>
+    <text x="600" y="515" font-size="11" text-anchor="middle" fill="white">Port: 6380</text>
+    
+    <!-- Node 3 -->
+    <rect x="850" y="400" width="200" height="140" fill="#ff6b6b" stroke="#cc5555" stroke-width="2" rx="8"/>
+    <text x="950" y="430" font-size="16" font-weight="bold" text-anchor="middle" fill="white">Cache Node 3</text>
+    <text x="950" y="455" font-size="12" text-anchor="middle" fill="white">Primary: Keys N-Z</text>
+    <text x="950" y="475" font-size="11" text-anchor="middle" fill="white">Memory: 8GB</text>
+    <text x="950" y="495" font-size="11" text-anchor="middle" fill="white">LRU Eviction</text>
+    <text x="950" y="515" font-size="11" text-anchor="middle" fill="white">Port: 6381</text>
+  </g>
+  
+  <!-- Arrows from proxy to nodes -->
+  <line x1="400" y1="320" x2="250" y2="400" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="600" y1="320" x2="600" y2="400" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="800" y1="320" x2="950" y2="400" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Replication arrows between nodes -->
+  <line x1="350" y1="470" x2="500" y2="470" stroke="#9966ff" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-purple)"/>
+  <line x1="700" y1="470" x2="850" y2="470" stroke="#9966ff" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-purple)"/>
+  <line x1="950" y1="540" x2="250" y2="540" stroke="#9966ff" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-purple)"/>
+  
+  <text x="425" y="460" font-size="11" fill="#9966ff" font-weight="bold">Replication</text>
+  <text x="775" y="460" font-size="11" fill="#9966ff" font-weight="bold">Replication</text>
+  
+  <!-- Discovery Service -->
+  <g id="discovery">
+    <rect x="450" y="620" width="300" height="100" fill="#f39c12" stroke="#c87f0a" stroke-width="2" rx="8"/>
+    <text x="600" y="650" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Service Discovery</text>
+    <text x="600" y="675" font-size="13" text-anchor="middle" fill="white">etcd / Consul / ZooKeeper</text>
+    <text x="600" y="695" font-size="12" text-anchor="middle" fill="white">• Cluster Membership  • Health Checks</text>
+    <text x="600" y="710" font-size="12" text-anchor="middle" fill="white">• Configuration  • Ring State</text>
+  </g>
+  
+  <!-- Arrows from nodes to discovery -->
+  <line x1="250" y1="540" x2="500" y2="620" stroke="#666" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+  <line x1="600" y1="540" x2="600" y2="620" stroke="#666" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+  <line x1="950" y1="540" x2="700" y2="620" stroke="#666" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+  
+  <!-- Backing Store -->
+  <g id="backing-store">
+    <rect x="50" y="620" width="250" height="100" fill="#34495e" stroke="#2c3e50" stroke-width="2" rx="8"/>
+    <text x="175" y="650" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Backing Store</text>
+    <text x="175" y="675" font-size="13" text-anchor="middle" fill="white">Database / Object Store</text>
+    <text x="175" y="695" font-size="12" text-anchor="middle" fill="white">Source of Truth</text>
+    <text x="175" y="710" font-size="12" text-anchor="middle" fill="white">(on cache miss)</text>
+  </g>
+  
+  <!-- Arrow from cache to backing store -->
+  <line x1="150" y1="540" x2="175" y2="620" stroke="#666" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+  <text x="120" y="580" font-size="11" fill="#666" font-weight="bold">Cache Miss</text>
+  
+  <!-- Monitoring -->
+  <g id="monitoring">
+    <rect x="900" y="620" width="250" height="100" fill="#8e44ad" stroke="#6c3483" stroke-width="2" rx="8"/>
+    <text x="1025" y="650" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Monitoring</text>
+    <text x="1025" y="675" font-size="13" text-anchor="middle" fill="white">Prometheus / Grafana</text>
+    <text x="1025" y="695" font-size="12" text-anchor="middle" fill="white">• Hit Ratio  • Latency</text>
+    <text x="1025" y="710" font-size="12" text-anchor="middle" fill="white">• Memory Usage  • Health</text>
+  </g>
+  
+  <!-- Arrow from nodes to monitoring -->
+  <line x1="950" y1="540" x2="1000" y2="620" stroke="#666" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+  
+  <!-- Legend -->
+  <g id="legend">
+    <rect x="30" y="780" width="1140" height="90" fill="white" stroke="#ccc" stroke-width="1" rx="5"/>
+    <text x="600" y="805" font-size="16" font-weight="bold" text-anchor="middle" fill="#333">Data Flow Legend</text>
+    
+    <line x1="100" y1="825" x2="180" y2="825" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <text x="190" y="830" font-size="13" fill="#333">Request/Response</text>
+    
+    <line x1="400" y1="825" x2="480" y2="825" stroke="#9966ff" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead-purple)"/>
+    <text x="490" y="830" font-size="13" fill="#333">Replication</text>
+    
+    <line x1="700" y1="825" x2="780" y2="825" stroke="#666" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrowhead)"/>
+    <text x="790" y="830" font-size="13" fill="#333">Heartbeat/Metrics</text>
+    
+    <text x="100" y="855" font-size="12" fill="#666">• RF=3 (Replication Factor)  • Consistent Hashing Ring  • Quorum Reads/Writes</text>
+  </g>
+  
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#666"/>
+    </marker>
+    <marker id="arrowhead-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#9966ff"/>
+    </marker>
+  </defs>
+</svg>
