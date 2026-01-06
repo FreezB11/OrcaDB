@@ -21,11 +21,10 @@ req_get_param(http_req_t *req, const char *key, int *val_len) {
     return NULL;
 }
 
-
 int main(){
     http *App = CreateServer();
-    add_route("GET","/echo", handle_echo);
-    add_route("GET","/ping", handle_ping);
+    add_route("GET","/api/v1/GET/:key", handle_echo);
+    add_route("GET","/api/v1/PUT/key&value", handle_ping);
     if (!App) {
         fprintf(stderr, "Failed to create server\n");
         return 1;
