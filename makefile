@@ -9,21 +9,18 @@ OBJS := $(SRC:.c=.o)
 
 OUTPUT := orca
 
-OBJS_C = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(wildcard $(SRC_DIR)/*.c))
-
 .PHONY: all directories $(OUTPUT) echo
-all: directories $(OUTPUT) echo
+all: directories $(OUTPUT) 
 
 $(OUTPUT): $(OBJS)
-
-echo:
-# 	echo "hello"
+	$(CC) $(CFLAGS) $^ -o $@
 
 # rule to compile .c to .o
 %.o: %.c
 # 	echo hi
-	mkdir -p $(OBJ_DIR)/$(dir $@)
-	$(CC) $(FLAGS) -c $< -o $(OBJ_DIR)/$@
+# 	mkdir -p $(OBJ_DIR)/$(dir $@)
+# 	$(CC) $(FLAGS) -c $< -o $(OBJ_DIR)/$@
+	$(CC) $(FLAGS) -c $< -o $@
 
 directories:
 	mkdir -p $(OBJ_DIR)
@@ -35,5 +32,5 @@ docker:
 	docker build -f Dockerfile.prod -t test-prod .
 
 clean:
-# 	rm -f $(OBJS)
-	rm -r ./obj
+	rm -f $(OBJS)
+# 	rm -r ./obj
