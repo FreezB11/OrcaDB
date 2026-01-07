@@ -17,6 +17,8 @@ conn_ctx_t *conn_pool = NULL;
 int conn_pool_next = 0;
 pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+hashmap* db = NULL;
+
 static inline const char *
 req_get_param(http_req_t *req, const char *key, int *val_len) {
     int klen = strlen(key);
@@ -47,15 +49,25 @@ void insert_handler(http_req_t *req, http_resp_t *res){
         res->body_len = pos;
         return;
     }
-    printf("handler works here\n"); // <= test line will be removed soon
     /*
         insert to the database i.e. to the hashmap
         so for now if we reach till here lets say
         we were successfull
     */
+    char *key_copy = malloc(key_len +1);
+    memcpy(key_copy, key, key_len);
+    key_copy[key_len]='\0';
+    char *val_copy = malloc(val_len + 1);
+    memcpy(val_copy, value, val_len);
+    val_copy[val_len] = '\0';
+
+    pthread_mutex_lock(&pool_mutex);
+    hm_insert(db, key_copy, val_copy, val_len);
+    pthread_mutex_unlock(&pool_mutex);
+
     res->status = 200;
     pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                            "{\"insert\": \"successful\"}\0");
+                            "{\"insert\": \"successful\"}");
     res->body_ptr = resp_body;
     res->body_len = pos;
     return;
@@ -75,10 +87,34 @@ void get_handler(http_req_t *req, http_resp_t *res){
         res->body_len = pos;
         return;
     }
+
+    char key_copy[key_len+1];
+    memcpy(key_copy, key, key_len);
+    key_copy[key_len] = '\0';
+
+    pthread_mutex_lock(&pool_mutex);
+    char* value = (char*)hm_get(db, key_copy);
+    pthread_mutex_unlock(&pool_mutex);
+
+    if (!value) {
+        res->status = 404;
+        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
+                        "{\"error\":\"key not found\"}");
+    } else {
+        res->status = 200;
+        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
+                        "{\"value\":\"%s\"}", value);
+    }
+    // res->status = 200;
+    // pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
+    //                         "{\"insert\": \"successful\"}");
+    res->body_ptr = resp_body;
+    res->body_len = pos;
+    return;
 }
 
 int main(){
-    hashmap* db = NULL;
+    // hashmap* db = NULL;
     http* Orca = CreateServer();
 
     if(file_exists("data.orca")){
