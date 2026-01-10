@@ -2,6 +2,7 @@
 #include "./http/http.h"
 #include "./http/route.h"
 #include "./hashmap/hashmap.h"
+#include "./hash/hash.h"
 #include "./storage/aof.h"
 #include "./storage/storage.h"
 #include <stdlib.h>
@@ -16,6 +17,9 @@ bool file_exists(const char *filename) {
 conn_ctx_t *conn_pool = NULL;
 int conn_pool_next = 0;
 pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#define STRIPES 64
+pthread_mutex_t stripes[STRIPES];
 
 hashmap* db = NULL;
 
@@ -61,9 +65,12 @@ void insert_handler(http_req_t *req, http_resp_t *res){
     memcpy(val_copy, value, val_len);
     val_copy[val_len] = '\0';
 
-    pthread_mutex_lock(&pool_mutex);
+    uint64_t h = FNV_1a(key_copy, key_len);
+    pthread_mutex_t *lock = &stripes[h & (STRIPES - 1)];
+
+    pthread_mutex_lock(lock);
     hm_insert(db, key_copy, val_copy, val_len);
-    pthread_mutex_unlock(&pool_mutex);
+    pthread_mutex_unlock(lock);
 
     res->status = 200;
     pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
@@ -114,6 +121,9 @@ void get_handler(http_req_t *req, http_resp_t *res){
 }
 
 int main(){
+    for (int i = 0; i < STRIPES; i++)
+        pthread_mutex_init(&stripes[i], NULL);
+
     // hashmap* db = NULL;
     http* Orca = CreateServer();
 
@@ -121,7 +131,7 @@ int main(){
         printf("[Orca] loading from snapshots...\n");
         db = db_load("data.orca");
     }else{
-        db = hm_create(4096);
+        db = hm_create(4096 * 16 * 16);
     }
 
     aof_t* aof = aof_open("append_log.aof", AOF_SYNC_EVERYSEC);

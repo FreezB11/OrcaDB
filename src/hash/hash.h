@@ -20,7 +20,7 @@
  * @param key Pointer to a kv_string containing the input data
  * @return 64-bit hash value
  */
-uint64_t FNV_1a(const char* key, size_t len);
+uint64_t FNV_1a(const void* key, size_t len);
 
 /**
  * @brief Compute the djb2 hash of a kv_string.
@@ -30,7 +30,7 @@ uint64_t FNV_1a(const char* key, size_t len);
  * @param key Pointer to a kv_string containing the input data
  * @return 64-bit hash value
  */
-uint64_t djb2(const char* key);
+uint64_t djb2(const void* key, size_t len);
 
 /**
  * @brief Compute the 64-bit xxHash of a raw byte buffer.
