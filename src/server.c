@@ -5,23 +5,27 @@
 #include "./hash/hash.h"
 #include "./storage/aof.h"
 #include "./storage/storage.h"
+#include "./storage/aof.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <stdbool.h>
 
-bool file_exists(const char *filename) {
-    struct stat buffer;
-    return stat(filename, &buffer) == 0 ? true : false;
-}   
+#define STRIPES 64
+#define AOF_FILE "append_log.aof"
+
+aof_t *global = NULL;
+hashmap* db = NULL;
 conn_ctx_t *conn_pool = NULL;
 int conn_pool_next = 0;
 pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-#define STRIPES 64
 pthread_mutex_t stripes[STRIPES];
 
-hashmap* db = NULL;
+
+bool file_exists(const char *filename) {
+    struct stat buffer;
+    return stat(filename, &buffer) == 0 ? true : false;
+}
 
 static inline const char *
 req_get_param(http_req_t *req, const char *key, int *val_len) {
@@ -120,6 +124,49 @@ void get_handler(http_req_t *req, http_resp_t *res){
     return;
 }
 
+void delete_handler(http_req_t *req, http_resp_t *res){
+    static __thread char resp_body[RESP_BUFFER_SIZE];
+    int pos = 0;
+    int key_len = 0;
+    const char* key = req_get_param(req, "key", &key_len);
+
+    if(!key || key_len == 0){
+        res->status = 400;
+        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
+                            "{\"error\":\"missing key\"}");
+        res->body_ptr = resp_body;
+        res->body_len = pos;
+        return;
+    }
+
+    char key_copy[key_len+1];
+    memcpy(key_copy, key, key_len);
+    key_copy[key_len] = '\0';
+
+    pthread_mutex_lock(&pool_mutex);
+    // char* value = (char*)hm_get(db, key_copy);
+    //delete operation
+    int value  = hm_delete(db, key_copy, 1);
+    // printf("[debug-log] umm this is not working %s\n", key_copy);
+    pthread_mutex_unlock(&pool_mutex);
+
+    if (value) {
+        res->status = 404;
+        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
+                        "{\"error\":\"key not found\"}");
+    } else {
+        res->status = 200;
+        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
+                        "{key deleted}", value);
+    }
+    // res->status = 200;
+    // pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
+    //                         "{\"insert\": \"successful\"}");
+    res->body_ptr = resp_body;
+    res->body_len = pos;
+    return;
+}
+
 int main(){
     for (int i = 0; i < STRIPES; i++)
         pthread_mutex_init(&stripes[i], NULL);
@@ -134,7 +181,7 @@ int main(){
         db = hm_create(4096 * 16 * 16);
     }
 
-    aof_t* aof = aof_open("append_log.aof", AOF_SYNC_EVERYSEC);
+    aof_t* aof = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
     if(aof){
         printf("[Orca] Replaying AOF...\n");
         aof_replay(aof, db);
@@ -142,8 +189,9 @@ int main(){
     printf("[Orca] Database ready!!!!\n");
     add_route("PUT","/api/v1/PUT", insert_handler);
     add_route("GET","/api/v1/GET", get_handler);
+    add_route("DELETE","/api/v1/DELETE", delete_handler);
 
-    printf("✅ Server running! Press Ctrl+C to stop.\n\n");
+    printf("Server running! Press Ctrl+C to stop.\n\n");
     fflush(stdout);
     
     for(;;) sleep(1);
