@@ -19,7 +19,7 @@ hashmap* db = NULL;
 conn_ctx_t *conn_pool = NULL;
 int conn_pool_next = 0;
 pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t stripes[STRIPES];
+// pthread_mutex_t stripes[STRIPES];
 
 
 bool file_exists(const char *filename) {
@@ -48,6 +48,8 @@ void insert_handler(http_req_t *req, http_resp_t *res){
     const char* key = req_get_param(req, "key", &key_len);
     const char* value = req_get_param(req, "value", &val_len);
 
+    // global = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
+
     // Validate parameters
     if (!key || !value || key_len == 0) {
         res->status = 400;
@@ -69,12 +71,14 @@ void insert_handler(http_req_t *req, http_resp_t *res){
     memcpy(val_copy, value, val_len);
     val_copy[val_len] = '\0';
 
-    uint64_t h = FNV_1a(key_copy, key_len);
-    pthread_mutex_t *lock = &stripes[h & (STRIPES - 1)];
+    // uint64_t h = FNV_1a(key_copy, key_len);
+    // pthread_mutex_t *lock = &stripes[h & (STRIPES - 1)];
 
-    pthread_mutex_lock(lock);
+    pthread_mutex_lock(&pool_mutex);
     hm_insert(db, key_copy, val_copy, val_len);
-    pthread_mutex_unlock(lock);
+    aof_append_set(global, key_copy, (void *)val_copy, val_len);
+    // aof_close(global);
+    pthread_mutex_unlock(&pool_mutex);
 
     res->status = 200;
     pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
@@ -130,6 +134,8 @@ void delete_handler(http_req_t *req, http_resp_t *res){
     int key_len = 0;
     const char* key = req_get_param(req, "key", &key_len);
 
+    // global = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
+
     if(!key || key_len == 0){
         res->status = 400;
         pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
@@ -148,6 +154,8 @@ void delete_handler(http_req_t *req, http_resp_t *res){
     //delete operation
     int value  = hm_delete(db, key_copy, 1);
     // printf("[debug-log] umm this is not working %s\n", key_copy);
+    aof_append_del(global, key_copy);
+    // aof_close(global);
     pthread_mutex_unlock(&pool_mutex);
 
     if (value) {
@@ -167,12 +175,13 @@ void delete_handler(http_req_t *req, http_resp_t *res){
     return;
 }
 
-int main(){
-    for (int i = 0; i < STRIPES; i++)
-        pthread_mutex_init(&stripes[i], NULL);
+void server(){
+    // for (int i = 0; i < STRIPES; i++)
+        // pthread_mutex_init(&stripes[i], NULL);
 
     // hashmap* db = NULL;
     http* Orca = CreateServer();
+    global = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
 
     if(file_exists("data.orca")){
         printf("[Orca] loading from snapshots...\n");
@@ -195,4 +204,8 @@ int main(){
     fflush(stdout);
     
     for(;;) sleep(1);
+}
+
+int main(){
+    server();
 }

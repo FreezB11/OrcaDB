@@ -23,7 +23,7 @@ $(OUTPUT): $(OBJS)
 	$(CC) $(FLAGS) -c $< -o $@
 
 directories:
-	mkdir -p $(OBJ_DIR)
+# 	mkdir -p $(OBJ_DIR)
 
 docker:
 	docker build -t kvcache .
