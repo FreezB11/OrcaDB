@@ -6,13 +6,17 @@
 #include "./storage/aof.h"
 #include "./storage/storage.h"
 #include "./storage/aof.h"
+#include "./handler/handler.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/stat.h>
-#include <stdbool.h>
+// #include <sys/stat.h>
+// #include <stdbool.h>
+#include "./utils/util.h"
 
 #define STRIPES 64
 #define AOF_FILE "append_log.aof"
+#define DB_FILE "data.orca"
+#define SNAPSHOT_INTERVAL 30 // for testing let it be 30 seconds for production it will be bigger maybe i have to test it
 
 aof_t *global = NULL;
 hashmap* db = NULL;
@@ -21,159 +25,38 @@ int conn_pool_next = 0;
 pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 // pthread_mutex_t stripes[STRIPES];
 
+/*
+    what we need now is we have to append and then 
+    flush the append_log.aof when we do a db_save and then on start we load that then do the 
+    replay for append log which will keep the system up to date    
 
-bool file_exists(const char *filename) {
-    struct stat buffer;
-    return stat(filename, &buffer) == 0 ? true : false;
-}
+    but we must do it periodically
+*/
 
-static inline const char *
-req_get_param(http_req_t *req, const char *key, int *val_len) {
-    int klen = strlen(key);
+void *snapshot_worker(void *arg) {
+    (void)arg;
 
-    for (int i = 0; i < req->param_count; i++) {
-        if (req->params[i].key_len == klen &&
-            memcmp(req->params[i].key, key, klen) == 0) {
-            if (val_len) *val_len = req->params[i].val_len;
-            return req->params[i].val;
+    for (;;) {
+        sleep(SNAPSHOT_INTERVAL);
+
+        printf("[Orca] Snapshotting database...\n");
+
+        pthread_mutex_lock(&pool_mutex);
+
+        // Save DB snapshot
+        if (db_save(db, DB_FILE) != 0) {
+            fprintf(stderr, "[Orca] db_save failed\n");
+        } else {
+            printf("[Orca] Snapshot saved\n");
         }
+        aof_rewrite(global, db);
+
+        pthread_mutex_unlock(&pool_mutex);
     }
+
     return NULL;
 }
 
-void insert_handler(http_req_t *req, http_resp_t *res){
-    static __thread char resp_body[RESP_BUFFER_SIZE];
-    int pos = 0;
-    int key_len = 0, val_len = 0;
-    const char* key = req_get_param(req, "key", &key_len);
-    const char* value = req_get_param(req, "value", &val_len);
-
-    // global = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
-
-    // Validate parameters
-    if (!key || !value || key_len == 0) {
-        res->status = 400;
-        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                        "{ \"error\": \"missing key or value\" }");
-        res->body_ptr = resp_body;
-        res->body_len = pos;
-        return;
-    }
-    /*
-        insert to the database i.e. to the hashmap
-        so for now if we reach till here lets say
-        we were successfull
-    */
-    char *key_copy = malloc(key_len +1);
-    memcpy(key_copy, key, key_len);
-    key_copy[key_len]='\0';
-    char *val_copy = malloc(val_len + 1);
-    memcpy(val_copy, value, val_len);
-    val_copy[val_len] = '\0';
-
-    // uint64_t h = FNV_1a(key_copy, key_len);
-    // pthread_mutex_t *lock = &stripes[h & (STRIPES - 1)];
-
-    pthread_mutex_lock(&pool_mutex);
-    hm_insert(db, key_copy, val_copy, val_len);
-    aof_append_set(global, key_copy, (void *)val_copy, val_len);
-    // aof_close(global);
-    pthread_mutex_unlock(&pool_mutex);
-
-    res->status = 200;
-    pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                            "{\"insert\": \"successful\"}");
-    res->body_ptr = resp_body;
-    res->body_len = pos;
-    return;
-}
-
-void get_handler(http_req_t *req, http_resp_t *res){
-    static __thread char resp_body[RESP_BUFFER_SIZE];
-    int pos = 0;
-    int key_len = 0;
-    const char* key = req_get_param(req, "key", &key_len);
-
-    if(!key || key_len == 0){
-        res->status = 400;
-        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                            "{\"error\":\"missing key\"}");
-        res->body_ptr = resp_body;
-        res->body_len = pos;
-        return;
-    }
-
-    char key_copy[key_len+1];
-    memcpy(key_copy, key, key_len);
-    key_copy[key_len] = '\0';
-
-    pthread_mutex_lock(&pool_mutex);
-    char* value = (char*)hm_get(db, key_copy);
-    pthread_mutex_unlock(&pool_mutex);
-
-    if (!value) {
-        res->status = 404;
-        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                        "{\"error\":\"key not found\"}");
-    } else {
-        res->status = 200;
-        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                        "{\"value\":\"%s\"}", value);
-    }
-    // res->status = 200;
-    // pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-    //                         "{\"insert\": \"successful\"}");
-    res->body_ptr = resp_body;
-    res->body_len = pos;
-    return;
-}
-
-void delete_handler(http_req_t *req, http_resp_t *res){
-    static __thread char resp_body[RESP_BUFFER_SIZE];
-    int pos = 0;
-    int key_len = 0;
-    const char* key = req_get_param(req, "key", &key_len);
-
-    // global = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
-
-    if(!key || key_len == 0){
-        res->status = 400;
-        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                            "{\"error\":\"missing key\"}");
-        res->body_ptr = resp_body;
-        res->body_len = pos;
-        return;
-    }
-
-    char key_copy[key_len+1];
-    memcpy(key_copy, key, key_len);
-    key_copy[key_len] = '\0';
-
-    pthread_mutex_lock(&pool_mutex);
-    // char* value = (char*)hm_get(db, key_copy);
-    //delete operation
-    int value  = hm_delete(db, key_copy, 1);
-    // printf("[debug-log] umm this is not working %s\n", key_copy);
-    aof_append_del(global, key_copy);
-    // aof_close(global);
-    pthread_mutex_unlock(&pool_mutex);
-
-    if (value) {
-        res->status = 404;
-        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                        "{\"error\":\"key not found\"}");
-    } else {
-        res->status = 200;
-        pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-                        "{key deleted}", value);
-    }
-    // res->status = 200;
-    // pos += snprintf(resp_body + pos, RESP_BUFFER_SIZE - pos,
-    //                         "{\"insert\": \"successful\"}");
-    res->body_ptr = resp_body;
-    res->body_len = pos;
-    return;
-}
 
 void server(){
     // for (int i = 0; i < STRIPES; i++)
@@ -183,18 +66,23 @@ void server(){
     http* Orca = CreateServer();
     global = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
 
-    if(file_exists("data.orca")){
+    if(file_exists(DB_FILE)){
         printf("[Orca] loading from snapshots...\n");
-        db = db_load("data.orca");
+        db = db_load(DB_FILE);
     }else{
         db = hm_create(4096 * 16 * 16);
     }
 
-    aof_t* aof = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
-    if(aof){
+    // aof_t* aof = aof_open(AOF_FILE, AOF_SYNC_EVERYSEC);
+    if(global){
         printf("[Orca] Replaying AOF...\n");
-        aof_replay(aof, db);
+        aof_replay(global, db);
     }
+
+    pthread_t snapshot_thread;
+    pthread_create(&snapshot_thread, NULL, snapshot_worker, NULL);
+    pthread_detach(snapshot_thread);
+
     printf("[Orca] Database ready!!!!\n");
     add_route("PUT","/api/v1/PUT", insert_handler);
     add_route("GET","/api/v1/GET", get_handler);

@@ -7,6 +7,7 @@ route_t routes[128];
 int route_count = 0;
 
 void handle_ping(http_req_t *req, http_resp_t *res) {
+    (void)req;
     static __thread char json[] = "{\"status\":\"ok\"}";
     res->is_static = 1; 
     res->status = 200;
@@ -34,6 +35,7 @@ void handle_echo(http_req_t *req, http_resp_t *res) {
 }
 
 void handle_404(http_req_t *req, http_resp_t *res) {
+    (void)req;
     // printf("[LOG]: this is a site not found error code = 404\n");
     static const char json[] = "{\"error\":\"Not Found\"}";
     res->status = 404;
