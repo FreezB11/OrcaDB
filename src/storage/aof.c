@@ -49,20 +49,44 @@ void aof_close(aof_t* aof){
 }
 
 // force sync
+// static void aof_sync(aof_t* aof){
+//     if(!aof || !!aof->file) return;
+//     fflush(aof->file);
+//     switch(aof->sync_policy){
+//         case AOF_SYNC_ALWAYS:
+//             fsync(fileno(aof->file));
+//             break;
+//         case AOF_SYNC_EVERYSEC:
+//             time_t now = time(NULL);
+//             if(now - aof->last_sync >= 1){
+//                 fsync(fileno(aof->file));
+//                 aof->last_sync = now;
+//             }
+//             break;
+//         case AOF_SYNC_NO:
+//             break;
+//     }
+// }
+// patch v0.1.2
 static void aof_sync(aof_t* aof){
-    if(!aof || !!aof->file) return;
+    if (!aof || !aof->file) return;
+
     fflush(aof->file);
-    switch(aof->sync_policy){
+
+    switch (aof->sync_policy) {
         case AOF_SYNC_ALWAYS:
             fsync(fileno(aof->file));
             break;
-        case AOF_SYNC_EVERYSEC:
+
+        case AOF_SYNC_EVERYSEC: {
             time_t now = time(NULL);
-            if(now - aof->last_sync >= 1){
+            if (now - aof->last_sync >= 1) {
                 fsync(fileno(aof->file));
                 aof->last_sync = now;
             }
             break;
+        }
+
         case AOF_SYNC_NO:
             break;
     }
@@ -70,12 +94,15 @@ static void aof_sync(aof_t* aof){
 
 /// @brief append the set command
 int aof_append_set(aof_t* aof, const char* key, const void* value, size_t val_len){
+    // printf("[LOG] we are in the aof_append_set <<-- this is a debug print\n");
     if (!aof || !aof->file || !key || !value) return -1;
+    printf("[LOG] we are in the aof_append_set <<-- this is a debug print\n");
     
     size_t key_len = strlen(key);
     
     // Write command: SET key_len key val_len value\n
     int written = fprintf(aof->file, "SET %zu %s %zu ", key_len, key, val_len);
+    printf("SET %zu %s %zu \n", key_len, key, val_len);
     if (written < 0) return -1;
     
     // Write value (may contain binary data or newlines)

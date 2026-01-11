@@ -57,7 +57,14 @@ void insert_handler(http_req_t *req, http_resp_t *res){
 
     pthread_mutex_lock(&pool_mutex);
     hm_insert(db, key_copy, val_copy, val_len);
-    aof_append_set(global, key_copy, (void *)val_copy, val_len);
+    printf("[LOG] we shall now set it in the appen_log file\n");
+    int ret = aof_append_set(global, key_copy, (void *)val_copy, val_len);
+    if(ret){
+        printf("[LOG] we have a issue here coz we got a -1\n");
+    }else{
+        printf("[LOG] we didnt get a -1, but the issue lies on the function\n");
+    }
+    fflush(stdout);
     // aof_close(global);
     pthread_mutex_unlock(&pool_mutex);
 
@@ -135,6 +142,7 @@ void delete_handler(http_req_t *req, http_resp_t *res){
     //delete operation
     int value  = hm_delete(db, key_copy, 1);
     // printf("[debug-log] umm this is not working %s\n", key_copy);
+    printf("[LOG] we shall now set it in the appen_log file\n");
     aof_append_del(global, key_copy);
     // aof_close(global);
     pthread_mutex_unlock(&pool_mutex);

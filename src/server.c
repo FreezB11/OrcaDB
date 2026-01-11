@@ -79,9 +79,9 @@ void server(){
         aof_replay(global, db);
     }
 
-    pthread_t snapshot_thread;
-    pthread_create(&snapshot_thread, NULL, snapshot_worker, NULL);
-    pthread_detach(snapshot_thread);
+    // pthread_t snapshot_thread;
+    // pthread_create(&snapshot_thread, NULL, snapshot_worker, NULL);
+    // pthread_detach(snapshot_thread);
 
     printf("[Orca] Database ready!!!!\n");
     add_route("PUT","/api/v1/PUT", insert_handler);

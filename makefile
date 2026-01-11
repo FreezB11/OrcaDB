@@ -31,6 +31,9 @@ docker:
 	docker build -f Dockerfile.test -t test-test .
 	docker build -f Dockerfile.prod -t test-prod .
 
+run:
+	./orca
+
 clean:
 	rm -f $(OBJS)
 # 	rm -r ./obj
