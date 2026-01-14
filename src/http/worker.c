@@ -1,8 +1,9 @@
 #include "worker.h"
 #include "http.h"
-
 #include <stdio.h>
 #include <string.h>
+
+// #define PORT 5050
 
 void *worker_thread(void *arg) {
     int cpu = (intptr_t)arg;
@@ -20,12 +21,13 @@ void *worker_thread(void *arg) {
     // Create listening socket with SO_REUSEPORT
     int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
+    // SOL_SOCKET tell that it applies to the socket layer not to tcp/ip
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     setsockopt(listen_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
     
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8080);
+    addr.sin_port = htons(PORT);
     addr.sin_addr.s_addr = INADDR_ANY;
     
     if (bind(listen_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {

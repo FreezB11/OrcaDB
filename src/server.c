@@ -6,7 +6,7 @@
 #include "./storage/aof.h"
 #include "./storage/storage.h"
 #include "./storage/aof.h"
-#include "./handler/handler.h"
+#include "./handler/server.handler.h"
 #include <stdlib.h>
 #include <stdio.h>
 // #include <sys/stat.h>
@@ -94,6 +94,6 @@ void server(){
     for(;;) sleep(1);
 }
 
-int main(){
-    server();
-}
+// int main(){
+//     server();
+// }

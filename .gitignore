@@ -3,3 +3,5 @@
 *.orca
 *.aof
 orca
+orca-server
+orca-manager

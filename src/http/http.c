@@ -28,7 +28,7 @@ http* CreateServer(){
     
     printf("\n");
     printf("╔════════════════════════════════════════════╗\n");
-    printf("║  Port: 8080                                ║\n");
+    printf("║  Port: %d                                ║\n", PORT);
     printf("║  Threads: %-2d                             ║\n", threads);
     printf("╚════════════════════════════════════════════╝\n");
     fflush(stdout);

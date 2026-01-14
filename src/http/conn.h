@@ -7,7 +7,8 @@
 typedef enum {
     CONN_READING = 0,
     CONN_WRITING = 1,
-    CONN_CLOSE = 2
+    CONN_CLOSE = 2,
+    CONN_PROXY = 3
 } conn_state_t;
 
 /*
@@ -25,14 +26,23 @@ resp	        Prepared HTTP response info (status, body pointer, length).
 */
 typedef struct {
     int fd;
+    int backend_fd;
+
     conn_state_t state;
+
     char *read_buf;
     char *write_buf;
+
     int read_total;
     int write_total;
     int write_pos;
+
     http_req_t req;
     http_resp_t resp;
+
+    char proxy_buff[8192];
+    int proxy_len;
+    int proxy_sent;
 } conn_ctx_t;
 
 conn_ctx_t *alloc_conn();
