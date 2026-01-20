@@ -9,6 +9,7 @@
 #include "./handler/server.handler.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 // #include <sys/stat.h>
 // #include <stdbool.h>
 #include "./utils/util.h"
@@ -55,6 +56,59 @@ void *snapshot_worker(void *arg) {
     }
 
     return NULL;
+}
+
+// void handshake(const char* ip, uint64_t port){
+//     printf("we will proceed with handshake\n");
+//     int temp_sock = socket(AF_INET, SOCK_STREAM, 0);
+//     // assigning the manager
+//     struct sockaddr_in manager = {0};
+//     manager.sin_family = AF_INET;
+//     manager.sin_port = htons(port);
+//     inet_pton(AF_INET, ip, &manager.sin_addr);
+
+//     //now we connect to the manager telling them we exist
+//     connect(temp_sock, (struct sockaddr *)&manager ,sizeof(manager));
+
+//     char buff[4096] = {0};
+//     char *src = " this is a secret message\n";
+//     memcpy(&buff, src, strlen(src));
+//     send(temp_sock, buff, strlen(src), 0);
+// }  
+
+void handshake(const char* ip, uint16_t port, const char *server_id) {
+    int temp_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (temp_sock < 0) {
+        perror("socket");
+        return;
+    }
+
+    struct sockaddr_in manager = {0};
+    manager.sin_family = AF_INET;
+    manager.sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip, &manager.sin_addr) != 1) {
+        perror("inet_pton");
+        close(temp_sock);
+        return;
+    }
+
+    if (connect(temp_sock, (struct sockaddr *)&manager, sizeof(manager)) < 0) {
+        perror("connect");
+        close(temp_sock);
+        return;
+    }
+
+    char buf[256];
+    snprintf(buf, sizeof(buf), "SERVER %s\n", server_id);
+
+    send(temp_sock, buf, strlen(buf), 0);
+
+    /* optional: wait for ACK */
+    recv(temp_sock, buf, sizeof(buf), 0);
+
+    /* DO NOT close temp_sock */
+    /* keep it open — this is your control channel */
 }
 
 

@@ -11,6 +11,7 @@
         // ./orca-server -p=8080 -ip=[manager-ip]
         // when the server is up or when we run the above command 
         // it must connect to the manager
+        handshake("127.0.0.1",8050, "testing");
         server();
     }
 #endif

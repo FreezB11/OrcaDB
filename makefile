@@ -1,13 +1,13 @@
 CC = gcc
 FLAGS = -O3 -g -march=native -D_GNU_SOURCE
 FLAGS += -lpthread -flto
-FLAGS += -Wall -Wextra -Wunused-parameter -DSERVER
+FLAGS += -Wall -Wextra -Wunused-parameter -DMANAGER
 
 SRC := $(shell find ./src -name "*.c")
 OBJ_DIR = obj
 OBJS := $(SRC:.c=.o)
 
-OUTPUT := orca-server
+OUTPUT := orca-manager
 
 .PHONY: all directories $(OUTPUT) echo
 all: directories $(OUTPUT) 
