@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define HM_CAP 4096 // hashmap-capacity
+#define HM_CAP 1 << 16 // hashmap-capacity = 65536
 
 typedef struct hm_node
 {
