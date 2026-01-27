@@ -1,7 +1,7 @@
 CC = gcc
 FLAGS = -O3 -g -march=native -D_GNU_SOURCE
 FLAGS += -lpthread -flto
-FLAGS += -Wall -Wextra -Wunused-parameter -DMANAGER
+FLAGS += -Wall -Wextra -Wunused-parameter 
 
 SRC := $(shell find ./src -name "*.c")
 OBJ_DIR = obj
