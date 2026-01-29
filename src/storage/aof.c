@@ -250,7 +250,7 @@ int aof_rewrite(aof_t* aof, hashmap* hm) {
     // Write current state of entire hashmap
     size_t entries = 0;
     for (size_t i = 0; i < hm->capacity; i++) {
-        hm_node* node = hm->buckets[i];
+        hm_node* node = &hm->buckets[i];
         
         while (node) {
             // Write SET command for each entry
@@ -260,7 +260,7 @@ int aof_rewrite(aof_t* aof, hashmap* hm) {
             fprintf(temp_fp, "\n");
             
             entries++;
-            node = node->next;
+            i = (i + 1) & (hm->capacity -1);
         }
     }
     

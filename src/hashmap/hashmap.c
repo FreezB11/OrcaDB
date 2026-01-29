@@ -13,12 +13,19 @@
 // we will need a hash function
 #include "../hash/hash.h"
 #include "hashmap.h"
+
+
+static inline size_t idx(hashmap* hm, uint64_t hash){
+    return hash & (hm->capacity - 1);
+}
+
+
 /// @struct hashmap
 /// @brief creates hashmap
 hashmap* hm_create(size_t capacity){
-    hashmap* hm = malloc(sizeof(hashmap));
+    hashmap* hm = calloc(1, sizeof(hashmap));
     if(!hm) return NULL;
-    hm->buckets = calloc(capacity, sizeof(hm_node*));
+    hm->buckets = calloc(capacity, sizeof(hm_node));
     if(!hm->buckets){
         free(hm); return NULL;
     }
@@ -40,13 +47,29 @@ int hm_insert(hashmap* hm, const char* key, void* value, size_t val_len){
     // since we aint bothering with hashing 
     // just got the code from online and added to hash.h
     uint64_t hash = FNV_1a(key, key_len);
+
+    hm_node cur={
+        .hash = hash,
+        .key = key,
+        .value = value,
+        .key_len = key_len,
+        .val_len = val_len,
+        .dib = 0,
+        .flags = 0
+    };
+
     // now we bother with the bucket index
     // from the computed hash value
-    size_t bucket_idx = hash % hm->capacity;
+    size_t bucket_idx = idx(hm, hash);
     // we check if the key exist
     // that is a collision so will update the value
-    hm_node* node = hm->buckets[bucket_idx];
-    while(node){
+    for(;;){
+        hm_node* node = &hm->buckets[bucket_idx];
+        if(node->hash == 0 || (node->flags & HM_FLAG_TOMB)){
+            *node = cur;
+            hm->count++;
+            return 0;
+        }
         if(node->hash == hash && 
             node->key_len == key_len &&
             memcmp(node->key, key, key_len) == 0){
@@ -57,28 +80,35 @@ int hm_insert(hashmap* hm, const char* key, void* value, size_t val_len){
                 node->val_len = val_len;
                 return 0;
             }
-        node = node->next;
+        // node = node->next;
+        if(node->dib < cur.dib){
+            hm_node tmp = *node;
+            *node = cur;
+            cur = tmp;
+        }
+        cur.dib++;
+        bucket_idx = (bucket_idx + 1) & (hm->capacity - 1);
     }
 
     // new key , so we create node
-    hm_node* new_node = malloc(sizeof(hm_node));
-    if(!new_node) return -1;
+    // hm_node* new_node = malloc(sizeof(hm_node));
+    // if(!new_node) return -1;
 
-    new_node->key = strdup(key);
-    if(!new_node->key){
-        free(new_node);
-        return -1;
-    }
-    new_node->key_len = key_len;
-    // new_node->value = strdup(value);
-    new_node->value = value;
-    new_node->val_len = val_len;
-    new_node->hash = hash;
+    // new_node->key = strdup(key);
+    // if(!new_node->key){
+    //     free(new_node);
+    //     return -1;
+    // }
+    // new_node->key_len = key_len;
+    // // new_node->value = strdup(value);
+    // new_node->value = value;
+    // new_node->val_len = val_len;
+    // new_node->hash = hash;
 
-    //insert at head of bucket
-    new_node->next = hm->buckets[bucket_idx];
-    hm->buckets[bucket_idx] = new_node;
-    hm->count++;
+    // //insert at head of bucket
+    // new_node->next = hm->buckets[bucket_idx];
+    // hm->buckets[bucket_idx] = new_node;
+    // hm->count++;
 
     ///@todo: check the load factor and then we resize
     return 0;
@@ -91,16 +121,19 @@ void* hm_get(hashmap* hm, const char* key){
 
     size_t key_len = strlen(key);
     uint64_t hash = FNV_1a(key, key_len);
-    size_t bucket_idx = hash % hm->capacity;
-
-    hm_node* node = hm->buckets[bucket_idx];
-    while(node){
+    size_t bucket_idx = idx(hm, hash);
+    uint16_t dib = 0;
+    for(;;){
+        hm_node* node = &hm->buckets[bucket_idx];
+        if(node->hash == 0 || dib > node->dib) return NULL;
         if(node->hash == hash &&
             node->key_len == key_len &&
             memcmp(node->key, key, key_len) == 0){
                 return node->value;
             }
-        node = node->next;
+        // node = node->next;
+        dib++;
+        bucket_idx = (bucket_idx + 1) & (hm->capacity - 1);
     }
     return NULL;
 }
@@ -113,33 +146,24 @@ int hm_delete(hashmap* hm, const char*key, int free_value){
 
     size_t key_len  = strlen(key);
     uint64_t hash = FNV_1a(key, key_len);
-    size_t bucket_idx = hash % hm->capacity;
+    size_t bucket_idx = idx(hm, hash);
+    uint16_t dib = 0;
+    // hm_node* prev = NULL;
 
-    hm_node* node = hm->buckets[bucket_idx];
-    hm_node* prev = NULL;
-
-    while(node){
+    for(;;){
+        hm_node* node = &hm->buckets[bucket_idx];
+        if(node->hash == 0 || dib > node->dib) return -1;
         if(node->hash == hash &&
             node->key_len == key_len &&
             memcmp(node->key, key, key_len) == 0){
-                if(prev){
-                    prev->next = node->next;
-                }else{
-                    hm->buckets[bucket_idx] = node->next;
-                }
-
-                // free the memory
-                free((void*)node->key);
-                if(free_value && node->value){
-                    free(node->value);
-                }
-                // free((void*)node->value);
-                free(node);
+                node->flags |= HM_FLAG_TOMB;
                 hm->count--;
                 return 0;
             }
-        prev = node;
-        node = node->next;
+        // prev = node;
+        // node = node->next;
+        dib++;
+        bucket_idx = (bucket_idx + 1) & (hm->capacity - 1);
     }
     return -1;
 }
@@ -149,19 +173,19 @@ int hm_delete(hashmap* hm, const char*key, int free_value){
 void hm_free(hashmap* hm, int free_values){
     if(!hm) return;
 
-    for(size_t i = 0; i < hm->capacity; i++){
-        hm_node* node = hm->buckets[i];
-        while(node){
-            hm_node* next = node->next;
-            free((void*)node->key);
-            // free((void*)node->value);
-            if(free_values && node->value){
-                free(node->value);
-            }
-            free(node);
-            node=next;
-        }
-    }
+    // for(size_t i = 0; i < hm->capacity; i++){
+    //     hm_node* node = hm->buckets[i];
+    //     while(node){
+    //         hm_node* next = node->next;
+    //         free((void*)node->key);
+    //         // free((void*)node->value);
+    //         if(free_values && node->value){
+    //             free(node->value);
+    //         }
+    //         free(node);
+    //         node=next;
+    //     }
+    // }
     free(hm->buckets);
     free(hm);
 }

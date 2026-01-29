@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define HM_FLAG_TOMB 0x1
 #define HM_CAP 1 << 16 // hashmap-capacity = 65536
 
 typedef struct hm_node
@@ -11,21 +12,24 @@ typedef struct hm_node
     // same goes here so it will be 32bytes till here
     void* value;
     // pointer so 8 bytes [40bytes till now]
-    struct hm_node* next;
+    // struct hm_node* next;
     // struct hm_node* prev;
     // this is also 8 bytes [48 bytes so far] this is okay ig
     uint64_t hash; // we can save the hash to save recomputation
 
     // length stored explicitly
-    size_t key_len;
-    size_t val_len;
-}hm_node; // 48 bytes;
+    uint16_t key_len;
+    uint16_t val_len;
+    uint16_t dib; // distance to initial bucket
+    uint16_t flags; // tombstone
+}hm_node; // 48 bytes; X
+// now we have it reduced to 32 bytes <<-half the cache line
 
 // we will stack align this; i.e. we try to keep the size as
 // small as possible by arranging the components correctly
 typedef struct hashmap{
     // 8bytes
-    hm_node** buckets; // array of bucket heads;
+    hm_node* buckets; // array of bucket heads;
     // size_t is 8 bytes [16bytes] so far
     size_t capacity;
     // this too is 8 bytes [24 bytes]
@@ -33,8 +37,10 @@ typedef struct hashmap{
     // 4 bytes that will [28 bytes]
     float load_factor; // trig to resize when threshold hit;
     // this will be padded and become 32 bytes;
+    // void* owner; // shard*
 }hashmap;
 /*
+    %%% the below is not correct for now coz i changed the hm_node
     we will do a analysis
     hashmap == 32 bytes
     hm_node** bucket since we will have 4096 entries

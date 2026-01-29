@@ -85,7 +85,7 @@ int db_save(hashmap* hm, const char* filename){
     size_t entries_written = 0;
 
     for(size_t i = 0; i < CAP; i++){
-        hm_node* node = hm->buckets[i];
+        hm_node* node = &hm->buckets[i];
         while(node){
             // we write the key_len
             uint32_t key_len = (uint32_t)node->key_len;
@@ -101,7 +101,8 @@ int db_save(hashmap* hm, const char* filename){
                 _checksum += checksum(node->value, val_len);                
             }
             entries_written++;
-            node = node->next;
+            // node = node->next;
+            i = (i + 1) & (hm->capacity -1);
         }
     }
 
