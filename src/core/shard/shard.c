@@ -138,18 +138,43 @@ void db_insert(const char* key, void* value, size_t val_len){
     int shard_id = l0 mod NSLAVE;
     shard_t *s = &shards[shard_id];
     // s->ring
-    proc_t *p;
-    p->op = OP_PUT;
-    p->key = key;
-    p->value = value;
-    p->val_len = val_len;
-    rBuff_write(&s->ring, p);
+    proc_t p={
+        .op = OP_PUT,
+        .key = key,
+        .value = value,
+        .val_len = val_len,
+    };
+    
+    rBuff_write(&s->ring, &p);
     // the below thread should take the key and insert into its hashmap;
     // threads[thread_id];
 }
 
-void* db_get(const char* key){
-    uint64_t l0 = djb2(key, strlen(key));
-    int shard_id = l0 mod NSLAVE;
+void* db_get(const char* key) {
+    uint64_t h = djb2(key, strlen(key));
+    int shard_id = h % NSLAVE;
     shard_t *s = &shards[shard_id];
+
+    void *result = NULL;
+    int status = 0;
+
+    proc_t p = {
+        .op = OP_GET,
+        .key = key,
+        .out_val = &result,
+        .status = &status,
+        .done = 0
+    };
+
+    // push request (spin until space)
+    while (rBuff_write(&s->ring, &p) != 0) {
+        sched_yield();
+    }
+
+    // wait for completion
+    while (!atomic_load_explicit(&p.done, memory_order_acquire)) {
+        sched_yield();
+    }
+
+    return result;
 }
