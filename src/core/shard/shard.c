@@ -1,6 +1,8 @@
 ///@file:shard.c
 #include <stdio.h>
 #include <unistd.h>
+#include <stddef.h>
+#include "shard.h"
 #include "../hash/hash.h"
 #include "../hashmap/hashmap.h"
 #include "./ringbuffer/ringbuffer.h"
@@ -133,7 +135,21 @@ void db_insert(const char* key, void* value, size_t val_len){
     uint64_t l0 = djb2(key, strlen(key));
     // for now we will let this be nslave but we have to optimize this too
     /// @todo optimize the below line
-    int thread_id = l0 mod NSLAVE;
+    int shard_id = l0 mod NSLAVE;
+    shard_t *s = &shards[shard_id];
+    // s->ring
+    proc_t *p;
+    p->op = OP_PUT;
+    p->key = key;
+    p->value = value;
+    p->val_len = val_len;
+    rBuff_write(&s->ring, p);
     // the below thread should take the key and insert into its hashmap;
     // threads[thread_id];
+}
+
+void* db_get(const char* key){
+    uint64_t l0 = djb2(key, strlen(key));
+    int shard_id = l0 mod NSLAVE;
+    shard_t *s = &shards[shard_id];
 }

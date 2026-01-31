@@ -7,7 +7,7 @@ SRC := $(shell find ./src -name "*.c")
 OBJ_DIR = obj
 OBJS := $(SRC:.c=.o)
 
-OUTPUT := orca-manager
+OUTPUT := orca_test
 
 .PHONY: all directories $(OUTPUT) echo
 all: directories $(OUTPUT) 
