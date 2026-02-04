@@ -91,7 +91,9 @@ static inline void hm_maybe_resize(hashmap *hm) {
 void hm_insert(hashmap* hm, const char* key, size_t key_len,
                const char* val, size_t val_len)
 {
-    uint64_t hash = FNV_1a(key, key_len);
+    uint64_t h1 = FNV_1a(key, key_len);
+    uint64_t h2 = djb2(key, key_len) | 1;
+    uint64_t hash = h1 + h2;
     size_t idx = hash & (hm->cap - 1);
     h_node *node = hm->buckets[idx];
     while (node) {
@@ -124,7 +126,9 @@ void hm_insert(hashmap* hm, const char* key, size_t key_len,
 
 char* hm_get(hashmap* hm, const char* key, size_t key_len){
     if(!hm || !key) return NULL;
-    uint64_t hash = FNV_1a(key, key_len);
+    uint64_t h1 = FNV_1a(key, key_len);
+    uint64_t h2 = djb2(key, key_len) | 1;
+    uint64_t hash = h1 + h2;
     size_t idx = hash & (hm->cap - 1);
     h_node *node = hm->buckets[idx];
     while(node){
@@ -141,7 +145,9 @@ char* hm_get(hashmap* hm, const char* key, size_t key_len){
 int hm_delete(hashmap *hm, const char *key, size_t key_len) {
     if (!hm || !key) return 0;
 
-    uint64_t hash = FNV_1a(key, key_len);
+    uint64_t h1 = FNV_1a(key, key_len);
+    uint64_t h2 = djb2(key, key_len) | 1;
+    uint64_t hash = h1 + h2;
     size_t idx = hash & (hm->cap - 1);
 
     h_node *node = hm->buckets[idx];
@@ -268,41 +274,10 @@ void run_benchmark(size_t cap, float fill_ratio) {
     );
 }
 
-
-// int main(){
-//     char *test_key = "hello";
-//     char *test_val = "world";
-//     int key_len = strlen(test_key);
-//     int val_len = strlen(test_val);
-//     hashmap *test = hm_init(16);
-//     hm_insert(test, test_key, key_len, test_val, val_len);
-
-//     char *validate = hm_get(test, test_key, key_len);
-//     if(memcmp(test_val, validate, val_len) == 0){
-//         printf("we got it right\n");
-//     }
-//     printf("%s\n", validate);
-//     return 0;
-// }
-
-// int main() {
-//     srand(123);
-
-//     size_t base_cap = 1 << 16;
-
-//     float levels[] = {0.10, 0.30, 0.50, 0.75, 0.90};
-
-//     for (size_t i = 0; i < sizeof(levels)/sizeof(levels[0]); i++) {
-//         run_benchmark(base_cap, levels[i]);
-//     }
-
-//     return 0;
-// }
-
 int main() {
     srand(123);
 
-    size_t base_cap = 1 << 16;
+    size_t base_cap = 1 << 21;
     float levels[] = {0.10, 0.30, 0.50, 0.75, 0.90};
 
     for (size_t i = 0; i < sizeof(levels)/sizeof(levels[0]); i++) {
