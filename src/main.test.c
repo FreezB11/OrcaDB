@@ -1,5 +1,5 @@
 ///@file:main.test.c
-#include "../core/orca.h"
+#include "./core/orca.h"
 
 ///@todo this is the goal we must achieve
 int main(){

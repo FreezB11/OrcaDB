@@ -2,7 +2,7 @@
 #include "server.handler.h"
 #include <pthread.h>
 #include "../http/http.h"
-#include "../storage/aof.h"
+#include "../../core/storage/aof.h"
 
 extern pthread_mutex_t pool_mutex;
 extern aof_t *global;

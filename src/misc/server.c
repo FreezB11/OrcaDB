@@ -1,18 +1,18 @@
 ///@file: server.c
 #include "./http/http.h"
 #include "./http/route.h"
-#include "./hashmap/hashmap.h"
-#include "./hash/hash.h"
-#include "./storage/aof.h"
-#include "./storage/storage.h"
-#include "./storage/aof.h"
+#include "../core/hashmap/hashmap.h"
+#include "../core/hash/hash.h"
+#include "../core/storage/aof.h"
+#include "../core/storage/storage.h"
+#include "../core/storage/aof.h"
 #include "./handler/server.handler.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 // #include <sys/stat.h>
 // #include <stdbool.h>
-#include "./utils/util.h"
+#include "../utils/util.h"
 
 #define STRIPES 64
 #define AOF_FILE "append_log.aof"
